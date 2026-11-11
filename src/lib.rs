@@ -11,7 +11,7 @@ use near_sdk::{env, json_types::U128, near, AccountId, NearToken, PanicOnDefault
 pub mod core;
 pub mod intent;
 
-use crate::core::{evaluate, outflow_rate_le, prune, spent_in_window, Policy};
+use crate::core::{evaluate, is_tightening as policy_is_tightening, prune, spent_in_window, Policy};
 
 /// Hard bound on the rolling-window log. Velocity limits already bound growth;
 /// this prevents pathological spam from making `pay` unusable.
@@ -108,9 +108,15 @@ impl LatchGuard {
     }
 
     fn is_tightening(&self, per_tx: u128, daily: u128, interval: u64, window: u64) -> bool {
-        per_tx <= self.per_tx_cap
-            && interval >= self.min_interval_secs
-            && outflow_rate_le(daily, window, self.daily_cap, self.window_secs)
+        policy_is_tightening(
+            &self.policy(),
+            &Policy {
+                per_tx_cap: per_tx,
+                daily_cap: daily,
+                min_interval_secs: interval,
+                window_secs: window,
+            },
+        )
     }
 
     // ---- owner controls -------------------------------------------------

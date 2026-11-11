@@ -21,7 +21,7 @@ authorizes it. Owner loosening (higher caps, wider window, new recipients) is ti
 tightening and pause are instant. Verified live on testnet: an under-cap 0.40 NEAR payment to a
 non-allowlisted attacker was rejected; three 0.40 NEAR payments hit the rolling window cap and
 one settled again after 60s; tampered, replayed, expired and overspending intents were all
-blocked; owner paused the keyless contract. 34 tests include property tests for policy
+blocked; owner paused the keyless contract. 38 tests include property tests for policy
 invariants and signature mutation. The contract account has 0 keys (deployer key deleted).
 LatchGuard protects intent integrity and spending policy; it does not claim to establish intent
 legitimacy or protect an exfiltrated signing key.
@@ -49,7 +49,7 @@ Repo: <link>  Demo: <link>
 ## Pre-submit checklist
 
 - [ ] Repository is public (judges cannot open private repos).
-- [ ] `cargo test` passes from a clean clone (34 tests).
+- [ ] `cargo test` passes from a clean clone (38 tests).
 - [ ] `bash scripts/verify-testnet.sh` shows `key_count=0`.
 - [ ] X post published, tags @NEARProtocol and #NEARHackathon, includes video or screenshots.
 - [ ] Form submitted before 14 Nov 2026 23:59 UTC with both links and a mainnet wallet.

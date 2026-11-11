@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Read-only verification of the deployed LatchGuard contract. No credentials.
 set -euo pipefail
-contract="${1:-latchguard-v2-47d093.testnet}"
+contract="${1:-latchguard-v3-29aa85.testnet}"
 
 python3 - "$contract" <<'PY'
 import base64, json, sys, urllib.request

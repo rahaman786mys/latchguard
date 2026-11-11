@@ -42,12 +42,28 @@ impl Deny {
 }
 
 /// True when `(daily_a / window_a) <= (daily_b / window_b)`, i.e. policy A can
-/// never move more per second than policy B. Used to decide whether a policy
-/// change is tightening (instant) or loosening (timelocked). Cross-multiplied to
-/// avoid floats; values fit comfortably in u128.
+/// never sustain more per second than policy B. Uses checked multiplication and
+/// fails closed (returns false = treat as loosening) on overflow.
 pub fn outflow_rate_le(daily_a: u128, window_a: u64, daily_b: u128, window_b: u64) -> bool {
     assert!(window_a > 0 && window_b > 0, "window must be positive");
-    daily_a.saturating_mul(window_b as u128) <= daily_b.saturating_mul(window_a as u128)
+    match (
+        daily_a.checked_mul(window_b as u128),
+        daily_b.checked_mul(window_a as u128),
+    ) {
+        (Some(lhs), Some(rhs)) => lhs <= rhs,
+        _ => false,
+    }
+}
+
+/// A change is tightening only if **all** loosening axes are non-increasing:
+/// per-tx cap, burst budget (daily cap), sustained rate (daily/window), and
+/// velocity (min interval must not shrink). Callers must also treat recipient
+/// additions separately; the contract timelocks those.
+pub fn is_tightening(old: &Policy, new: &Policy) -> bool {
+    new.per_tx_cap <= old.per_tx_cap
+        && new.daily_cap <= old.daily_cap
+        && new.min_interval_secs >= old.min_interval_secs
+        && outflow_rate_le(new.daily_cap, new.window_secs, old.daily_cap, old.window_secs)
 }
 
 /// Drop payments that fell out of the trailing window.
@@ -227,5 +243,47 @@ mod tests {
         assert!(outflow_rate_le(NEAR, DAY, 2 * NEAR, DAY));
         // Equal rates are not loosening.
         assert!(outflow_rate_le(NEAR, 3600, 24 * NEAR, DAY));
+    }
+
+    #[test]
+    fn classifier_rejects_burst_increase_with_equal_rate() {
+        // Equal sustained rate, 1440x larger burst budget: loosening.
+        let old = Policy {
+            per_tx_cap: NEAR,
+            daily_cap: NEAR,
+            min_interval_secs: 0,
+            window_secs: 60,
+        };
+        let new = Policy {
+            per_tx_cap: NEAR,
+            daily_cap: 1_440 * NEAR,
+            min_interval_secs: 0,
+            window_secs: DAY,
+        };
+        assert!(outflow_rate_le(new.daily_cap, new.window_secs, old.daily_cap, old.window_secs));
+        assert!(!is_tightening(&old, &new), "burst increase must queue");
+    }
+
+    #[test]
+    fn classifier_accepts_true_tightening() {
+        let old = Policy {
+            per_tx_cap: NEAR,
+            daily_cap: NEAR,
+            min_interval_secs: 0,
+            window_secs: 60,
+        };
+        let new = Policy {
+            per_tx_cap: NEAR,
+            daily_cap: NEAR,
+            min_interval_secs: 0,
+            window_secs: DAY,
+        };
+        assert!(is_tightening(&old, &new));
+    }
+
+    #[test]
+    fn overflow_fails_closed() {
+        // Huge values that would wrap: must be treated as loosening.
+        assert!(!outflow_rate_le(u128::MAX, 1, u128::MAX, u64::MAX));
     }
 }

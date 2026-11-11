@@ -12,7 +12,7 @@ Expected: `key_count=0`, policy tuple with a 60s window, spent window value,
 ## Offline (no chain, no API keys)
 
 ```bash
-cargo test                        # 34 tests
+cargo test                        # 38 tests
 cargo run --example agent_demo    # policy + signed intent demo
 cargo run --example agent_injection
 ```
@@ -39,10 +39,11 @@ table. Key outcomes:
 
 1. `bash scripts/verify-testnet.sh` — show `key_count=0`.
 2. `cargo run --example agent_injection` — attacker and overspend blocked, legit settles, replay blocked.
-3. Tampered call on the deployed contract: signature for 0.40, call asks 0.50 → `bad_signature`.
-4. Replay nonce=2 → `nonce_replay`.
-5. Legit 0.40 NEAR settles; show explorer tx.
-6. Owner pause on the keyless contract → `is_paused=true`.
+3. On the deployed contract: under-cap 0.40 to attacker → `recipient_not_allowlisted`; tampered call → `bad_signature`; replay → `nonce_replay`.
+4. Legit 0.40 settles; show explorer tx.
+5. Rolling window: two 0.40 settle, third → `window_cap_exceeded`; after 61s it settles again.
+6. Timelock: propose higher cap → still blocked → applied after 30s → settles.
+7. Pause instant; unpause queued; `key_count=0`.
 
 Say plainly: the injection harness is deterministic; LatchGuard is the
 signing/settlement boundary beneath any agent runtime.

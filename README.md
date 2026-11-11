@@ -3,7 +3,7 @@
 **Signature-bound, policy-enforced payments for AI agents on NEAR.**
 Track 06 — AI Security & Defense.
 
-LatchGuard, deployed as `latchguard-v2-47d093.testnet`.
+LatchGuard, deployed as `latchguard-v3-29aa85.testnet`.
 Earlier development deployments used `agent-guard-*` / `latchguard-ef3931` IDs.
 
 > A NEAR function-call key restricts *which method* an agent may call. It does not
@@ -20,7 +20,7 @@ velocity limit.
 
 ## Live evidence (NEAR testnet)
 
-Contract: `latchguard-v2-47d093.testnet`
+Contract: `latchguard-v3-29aa85.testnet`
 Owner: `agent-guard-owner-e714a8.testnet`
 Contract account keys: **0** (deployer key deleted)
 Demo policy: per-tx 0.50 NEAR, rolling **60s** window cap 1.00 NEAR, interval 0,
@@ -28,22 +28,22 @@ timelock **30s**. (Production: 24h window, 24–48h timelock; see below.)
 
 | Attempt | Result | Transaction |
 |---|---|---|
-| Allowlist add (timelocked) | pending → applied after 30s | `H1kX7RfhkeSNC2CTcHQrx3u3Ct2MuDjFo4qoYCsEJjgs`, `6VAoPgrTkAYwusct4emHk4zxmkRd54URh8ys77W4B7rr` |
-| **Under-cap 0.40 NEAR to non-allowlisted attacker** | `recipient_not_allowlisted` | `8bvJba7W9ukuJhsSCUpCeJ9pnpTMTxUaFYn33C117PP2` |
-| Signed 0.40 NEAR (nonce=2) | settled | `FwMuBdYe8ZpPf2YWV24hjEvxuN9CitdimWfBjJGdPa2s` |
-| Signed 0.40 NEAR (nonce=3) | settled | `CaQRHV4suzNkBT6qc8dS9KTLqgDSaPAiWuG3gbwU9qpP` |
-| Third 0.40 inside 60s | `window_cap_exceeded` | `EGxVG2KVYasvnHdxPsXi9TeTX6Gg4dcfYj9uXoRtT7bD` |
-| 0.40 after the window | settled | `veqvyoLc3n2UAoNutzEws1svauK3fqUhwshuNs71nbj` |
-| Signature for 0.40, call asks 0.50 | `bad_signature` | `F13jMCAgVc2ra3rZdLE7WaN1wVN8WhgDv1XJtYD7YbHK` |
-| Replay nonce=2 | `nonce_replay` | `CL7RXhHyfcausrdaB4ccK7cYc1V96o2dNnAubcfJgfio` |
-| Expired intent | `expired_intent` | `94GBVCjLU5CpTkfL3pyYuFXqPn2b5mCAtKQ6Lx1BKzGC` |
-| Overspend 0.60 NEAR | `per_tx_cap_exceeded` | `CAVPS4zGGj8aU9JPp4WJHrGHT57w3r4uhp8YVZmbbxnW` |
-| Owner proposes higher caps | pending; 0.70 still blocked | `6G4b3DF3ZZB3YQRVQTGJfhpMasVJtYsnbybNJ5F3mQow`, `Cd3DpcxRdFhFXjJWxiSY19vkWp5iVnR2qBq788S97b1p` |
-| Policy applied after 30s | 0.70 settles | `vcpGd72PsZ7f8fz3jcvCZz6bAS5tvnMk5TcZsgP82uP`, `2CfRQHRME4QCjhuXLjW4qpb4boQ5svNwYeVhRLkYW94S` |
-| Deployer key deleted | RPC key list empty | `3xgM1EmuDWeYtuwGMBLf1KuXWe19BVFBXC3693moyxXp` |
-| Pause (instant) | `is_paused=true` | `7NdoiZEA9jC5tANk1M8djbBCodkE9cgmDRQFTsDyNhn4` |
-| Unpause requested (timelocked) | still paused | `2TfjsyVvP3ffZ9aMorTcAwBzUcmw8BtRLpSf85tEc64K` |
-| Unpause applied after 30s | `is_paused=false` | `5Vps6w7vF7DJzFAjDX5BqsVV32TPQKQy1iRN7VYg73mA` |
+| Allowlist add (timelocked) | pending → applied after 30s | `97kQnXhxaSVF4ieHzCr7F7svvMrtZrn7YGKPY7kmxnU2`, `G9FtJmS5VUtyqDkKm2PVqbrDrUBhyn37EpGbkSD9sB5E` |
+| **Under-cap 0.40 NEAR to non-allowlisted attacker** | `recipient_not_allowlisted` | `6Nn5HVfenriB3chNY5cVdAyBo8N741bqAVDwLKVVBJ9Q` |
+| Signed 0.40 NEAR (nonce=2) | settled | `6b7tbE3AgSx417CXELv5dLqdjGqTtcaZeNKfxYXWUtVH` |
+| Signed 0.40 NEAR (nonce=3) | settled | `oQB92m4SCE7U67oLMXE1FoPUqJxBckbMP3eXsmqKSUJ` |
+| Third 0.40 inside 60s | `window_cap_exceeded` | `DKk2vibuzM2sKJoyUiTzxw9GQYaLgSeB2Ax34yWrYCin` |
+| 0.40 after the window | settled | `HfpeQ8HXRFDtrH4wWd9cTXCW2nCzoxU6H6hQxxp613g5` |
+| Signature for 0.40, call asks 0.50 | `bad_signature` | `8WbzJzd4D9devwPQDnXiDYcHb9pXoek52jEJEFghkaua` |
+| Replay nonce=2 | `nonce_replay` | `9wB7HTLk5ejKxMU1wxatgPt3CuqEVgsRDBbSYwSKjVZ5` |
+| Expired intent | `expired_intent` | `9Q4861fGRU7j9YEJeH9EwJZUKMUiRRiGsc2b24tDnxmU` |
+| Overspend 0.60 NEAR | `per_tx_cap_exceeded` | `EbMU7DFAEpj6RDwwzZKeZoLDoKtvECKUpgJarR1psrKE` |
+| Owner proposes higher caps | pending; 0.70 still blocked | `AdA5qaU7pAAqVW5S1eEwLMmS2MyqwRMvqHMzkzyYJNj5`, `BT2PUdC7wqx7YV3iEHntUwpLGb7M8axY61TeEeec2Yeg` |
+| Policy applied after 30s | 0.70 settles | `6rGRS3GPkEaEsggS6PqEBpCT5YjUyRRrd3yESeNcRr73`, `7uzcEqZYDcHx6pcUrtwxa8hFb88aNB3oRN43pPquVE3J` |
+| Deployer key deleted | RPC key list empty | `9MDg2Lbx7tHA6hQfGRv4fpHLxDhRWfRPVyuNGzbynr3S` |
+| Pause (instant) | `is_paused=true` | `6a3DXmwV9jUS7EthfZdhATqsAUgnWYRUuTEdztrtEdLY` |
+| Unpause requested (timelocked) | still paused | `2vu4zaR4i1xxrK8ZwNJG1ZM1pWttDuv6W31HbCPhi6rf` |
+| Unpause applied after 30s | `is_paused=false` | `5S3Ck27RH8KSTdcehh57BFfqY6ry8bnQkU9Az8M7gytJ` |
 
 Explorer: `https://explorer.testnet.near.org/transactions/<hash>`
 Read-only check: `bash scripts/verify-testnet.sh`.
@@ -82,23 +82,38 @@ signature is the authorization. Relayer censorship is a liveness assumption.
 
 ## Timelock bypass analysis
 
-These are the four ways a timelock usually fails; each is closed and tested:
+These are the ways a timelock usually fails; each is closed, tested, or disclosed:
 
 1. **Window direction.** A narrower window with the same cap allows more per
-   second. `is_tightening` compares `daily_cap / window_secs` by cross-multiplication
-   (`core::outflow_rate_le`), so narrowing is queued as loosening; widening is
-   tightening. Test: `narrowing_window_is_timelocked`.
-2. **Delay cannot be lowered.** `delay_secs` is set in `#[init]` and has no setter.
-   The demo value is 30s; production recommendation is 24–48h.
-3. **Log eviction.** The rolling sum is recomputed from a bounded log; evicting
-   in-window entries would reduce the sum. When the log is full after pruning, the
-   contract rejects (`spend_log_full`) instead of evicting.
-4. **Pending vs tightening.** A tightening change clears any pending loosening
-   before applying; pending policy can be cancelled by the owner. Test:
+   second. The classifier compares `daily_cap / window_secs` by checked
+   cross-multiplication (`core::outflow_rate_le`), so narrowing queues.
+   Test: `narrowing_window_is_timelocked`.
+2. **Burst vs sustained rate.** Equal rate can hide a 1440× larger burst (1 NEAR
+   per 60s vs 1440 NEAR per day). `core::is_tightening` therefore requires **all**
+   axes non-increasing: per-tx cap, daily cap (burst), rate, and velocity.
+   Tests: `classifier_rejects_burst_increase_with_equal_rate`,
+   property test `classifier_matches_all_loosening_axes`.
+3. **Overflow.** Rate products use `checked_mul`; on overflow the change is
+   classified as loosening (fail closed). Zero windows are rejected at policy
+   set/init. Test: `overflow_fails_closed`.
+4. **Delay cannot be lowered.** `delay_secs` is set in `#[init]` and has no
+   setter. The demo value is 30s; production recommendation is 24–48h.
+5. **Log eviction.** The rolling sum is recomputed from a bounded log; evicting
+   in-window entries would undercount. When the log is full after pruning, the
+   contract rejects (`spend_log_full`) instead of evicting. Only successful
+   payments are logged. With a production velocity of 60s, at most 1,440 entries
+   fit in a 24h window (< 2,048), so the bound is unreachable; the 60s demo window
+   with interval 0 can fill it (accepted liveness DoS, disclosed).
+6. **Pending vs tightening.** A tightening change clears any pending loosening
+   before applying; pending policy and allowlist entries can be cancelled. Owner
+   key rotation (`set_agent_key`) is intentionally instant for incident response;
+   the owner is trusted and can already call `pay`. Test:
    `tightening_clears_pending_loosening`.
 
 Delayed unpause is part of the same asymmetry: pause is instant, unpause waits the
-timelock (`apply_unpause`), so a compromised owner cannot flash-unpause.
+timelock (`apply_unpause`), so a compromised owner cannot flash-unpause. Pending
+requests have no automatic expiry; the owner can cancel them, and anyone can apply
+them only after the delay.
 
 ## Threat model
 
@@ -148,7 +163,7 @@ scripts/verify-testnet.sh     read-only verification of deployed state
 ## Quickstart
 
 ```bash
-cargo test                        # 34 tests (32 unit + 2 property)
+cargo test                        # 38 tests (35 unit + 3 property)
 cargo run --example agent_demo
 cargo run --example agent_injection
 cargo build --release --target wasm32-unknown-unknown
@@ -188,10 +203,15 @@ keeps policy/pause authority.
 Demo parameters are 60s window / 30s timelock to make the behaviour observable in
 a short video. Production should use a 24h window and a 24–48h timelock.
 
-Build artifact from the deployed source tree: 245,163 bytes, SHA-256
-`2e047bf8f5d095298f825864ab7f23b6dd60639a4e0486718272d9fcf5ec51b8`
+Build artifact from the deployed source tree: 245,155 bytes, SHA-256
+`fcd75509b51f82ad84de7f79a4cd3be58f35affadbb7acb3b91ed825654c014b`
 (`cargo build --release --target wasm32-unknown-unknown`). No contract source was
-changed after deployment; only docs and the read-only verify script.
+changed after deployment; only docs and scripts.
+
+NEAR `view_account` for `latchguard-v3-29aa85.testnet` reports
+`code_hash = fcd75509b51f82ad84de7f79a4cd3be58f35affadbb7acb3b91ed825654c014b`,
+byte-for-byte equal to the local build. Because the account has 0 keys, that code
+cannot change.
 
 ## Limitations / roadmap
 

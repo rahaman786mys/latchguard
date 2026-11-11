@@ -5,6 +5,33 @@
 use agent_guard::core::*;
 use proptest::prelude::*;
 
+fn policy_strategy() -> impl Strategy<Value = Policy> {
+    (1u128..1_000_000u128, 0u128..1_000_000u128, 0u64..1_000, 1u64..100_000u64).prop_map(
+        |(per_tx, extra, interval, window)| Policy {
+            per_tx_cap: per_tx,
+            daily_cap: per_tx + extra,
+            min_interval_secs: interval,
+            window_secs: window,
+        },
+    )
+}
+
+proptest! {
+    #[test]
+    fn classifier_matches_all_loosening_axes(a in policy_strategy(), b in policy_strategy()) {
+        let tight = is_tightening(&a, &b);
+        let expected = b.per_tx_cap <= a.per_tx_cap
+            && b.daily_cap <= a.daily_cap
+            && b.min_interval_secs >= a.min_interval_secs
+            && outflow_rate_le(b.daily_cap, b.window_secs, a.daily_cap, a.window_secs);
+        prop_assert_eq!(tight, expected);
+        if tight {
+            prop_assert!(b.daily_cap <= a.daily_cap);
+            prop_assert!(b.per_tx_cap <= a.per_tx_cap);
+        }
+    }
+}
+
 proptest! {
     #[test]
     fn policy_never_allows_an_invariant_break(
