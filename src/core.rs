@@ -34,11 +34,20 @@ impl Deny {
             Deny::ZeroAmount => "zero_amount",
             Deny::NotAllowlisted => "recipient_not_allowlisted",
             Deny::PerTxCap => "per_tx_cap_exceeded",
-            Deny::DailyCap => "daily_cap_exceeded",
+            Deny::DailyCap => "window_cap_exceeded",
             Deny::Velocity => "velocity_limit",
             Deny::InsufficientBalance => "insufficient_balance",
         }
     }
+}
+
+/// True when `(daily_a / window_a) <= (daily_b / window_b)`, i.e. policy A can
+/// never move more per second than policy B. Used to decide whether a policy
+/// change is tightening (instant) or loosening (timelocked). Cross-multiplied to
+/// avoid floats; values fit comfortably in u128.
+pub fn outflow_rate_le(daily_a: u128, window_a: u64, daily_b: u128, window_b: u64) -> bool {
+    assert!(window_a > 0 && window_b > 0, "window must be positive");
+    daily_a.saturating_mul(window_b as u128) <= daily_b.saturating_mul(window_a as u128)
 }
 
 /// Drop payments that fell out of the trailing window.
@@ -205,5 +214,18 @@ mod tests {
         let now = 1_700_000_000u64;
         let spends: Vec<Spend> = vec![(now - DAY, 5 * NEAR)];
         assert_eq!(spent_in_window(&spends, now, DAY), 0);
+    }
+
+    #[test]
+    fn outflow_rate_direction_is_correct() {
+        // Same cap, narrower window = more per second = loosening.
+        assert!(!outflow_rate_le(NEAR, 60, NEAR, DAY));
+        // Same cap, wider window = less per second = tightening.
+        assert!(outflow_rate_le(NEAR, DAY, NEAR, 3600));
+        // Higher cap is loosening; lower cap is tightening.
+        assert!(!outflow_rate_le(2 * NEAR, DAY, NEAR, DAY));
+        assert!(outflow_rate_le(NEAR, DAY, 2 * NEAR, DAY));
+        // Equal rates are not loosening.
+        assert!(outflow_rate_le(NEAR, 3600, 24 * NEAR, DAY));
     }
 }

@@ -11,7 +11,7 @@ use near_sdk::{env, json_types::U128, near, AccountId, NearToken, PanicOnDefault
 pub mod core;
 pub mod intent;
 
-use crate::core::{evaluate, prune, spent_in_window, Policy};
+use crate::core::{evaluate, outflow_rate_le, prune, spent_in_window, Policy};
 
 /// Hard bound on the rolling-window log. Velocity limits already bound growth;
 /// this prevents pathological spam from making `pay` unusable.
@@ -36,6 +36,8 @@ pub struct LatchGuard {
     pending_policy: Option<(u128, u128, u64, u64, u64)>,
     /// Allowlist additions waiting out the timelock: (account, apply_after).
     pending_allowlist: Vec<(AccountId, u64)>,
+    /// Unpause waiting out the timelock.
+    pending_unpause: Option<u64>,
     agent_pubkey: Vec<u8>,
     used_nonces: Vec<u64>,
 }
@@ -67,6 +69,7 @@ impl LatchGuard {
             spends: Vec::new(),
             pending_policy: None,
             pending_allowlist: Vec::new(),
+            pending_unpause: None,
             agent_pubkey: Vec::new(),
             used_nonces: Vec::new(),
         }
@@ -106,9 +109,8 @@ impl LatchGuard {
 
     fn is_tightening(&self, per_tx: u128, daily: u128, interval: u64, window: u64) -> bool {
         per_tx <= self.per_tx_cap
-            && daily <= self.daily_cap
             && interval >= self.min_interval_secs
-            && window <= self.window_secs
+            && outflow_rate_le(daily, window, self.daily_cap, self.window_secs)
     }
 
     // ---- owner controls -------------------------------------------------
@@ -242,13 +244,35 @@ impl LatchGuard {
     pub fn pause(&mut self) {
         self.assert_owner();
         self.paused = true;
+        self.pending_unpause = None;
         env::log_str("AGENT_GUARD_PAUSED");
     }
 
     pub fn unpause(&mut self) {
         self.assert_owner();
-        self.paused = false;
-        env::log_str("AGENT_GUARD_UNPAUSED");
+        if self.delay_secs == 0 {
+            self.paused = false;
+            self.pending_unpause = None;
+            env::log_str("AGENT_GUARD_UNPAUSED");
+        } else {
+            let after = Self::now_secs() + self.delay_secs;
+            self.pending_unpause = Some(after);
+            env::log_str(&format!("AGENT_GUARD_UNPAUSE_PENDING apply_after={}", after));
+        }
+    }
+
+    /// Anyone can finalize a matured unpause.
+    pub fn apply_unpause(&mut self) {
+        let now = Self::now_secs();
+        match self.pending_unpause {
+            Some(after) if now >= after => {
+                self.paused = false;
+                self.pending_unpause = None;
+                env::log_str("AGENT_GUARD_UNPAUSED");
+            }
+            Some(after) => env::panic_str(&format!("unpause not ready until {}", after)),
+            None => env::panic_str("no pending unpause"),
+        }
     }
 
     // ---- funds ----------------------------------------------------------
@@ -318,6 +342,13 @@ impl LatchGuard {
     fn execute_payment(&mut self, recipient: AccountId, amount: u128, memo: String) -> Promise {
         let now = Self::now_secs();
         prune(&mut self.spends, now, self.window_secs);
+        if self.spends.len() >= MAX_SPENDS {
+            env::log_str(&format!(
+                "AGENT_GUARD_BLOCK recipient={} amount={} reason=spend_log_full",
+                recipient, amount
+            ));
+            env::panic_str("blocked: spend_log_full");
+        }
         let spent = spent_in_window(&self.spends, now, self.window_secs);
 
         let allowlisted = self.allowlist.contains(&recipient);
@@ -333,10 +364,6 @@ impl LatchGuard {
         ) {
             Ok(()) => {
                 self.spends.push((now, amount));
-                if self.spends.len() > MAX_SPENDS {
-                    let excess = self.spends.len() - MAX_SPENDS;
-                    self.spends.drain(0..excess);
-                }
                 self.last_payment_ts = now;
                 env::log_str(&format!(
                     "AGENT_GUARD_ALLOW recipient={} amount={} memo={}",
@@ -406,6 +433,10 @@ impl LatchGuard {
 
     pub fn pending_allowlist(&self) -> Vec<(AccountId, u64)> {
         self.pending_allowlist.clone()
+    }
+
+    pub fn pending_unpause(&self) -> Option<u64> {
+        self.pending_unpause
     }
 
     pub fn is_paused(&self) -> bool {
@@ -633,5 +664,47 @@ mod contract_tests {
         testing_env!(context(accounts(1), 1_700_000_131).build());
         c.apply_pending_allowlist();
         assert!(c.get_allowlist().contains(&accounts(1)));
+    }
+
+    #[test]
+    fn narrowing_window_is_timelocked() {
+        // Same cap over a narrower window permits more per second: loosening.
+        let mut c = delayed_contract();
+        c.set_policy(U128(NEAR), U128(2 * NEAR), 0, 30);
+        assert!(c.pending_policy().is_some());
+        assert_eq!(c.window_secs(), 3_600);
+    }
+
+    #[test]
+    fn widening_window_is_immediate() {
+        let mut c = delayed_contract();
+        c.set_policy(U128(NEAR), U128(2 * NEAR), 0, 7_200);
+        assert!(c.pending_policy().is_none());
+        assert_eq!(c.window_secs(), 7_200);
+    }
+
+    #[test]
+    fn tightening_clears_pending_loosening() {
+        let mut c = delayed_contract();
+        c.set_policy(U128(5 * NEAR), U128(10 * NEAR), 0, 3_600);
+        assert!(c.pending_policy().is_some());
+        c.set_policy(U128(NEAR / 2), U128(NEAR), 0, 3_600);
+        assert!(c.pending_policy().is_none());
+        assert_eq!(c.get_policy().0 .0, NEAR / 2);
+    }
+
+    #[test]
+    fn unpause_is_timelocked() {
+        let mut c = delayed_contract();
+        c.pause();
+        assert!(c.is_paused());
+
+        c.unpause();
+        assert!(c.is_paused(), "unpause must wait for the timelock");
+        assert!(c.pending_unpause().is_some());
+
+        testing_env!(context(accounts(0), 1_700_000_131).build());
+        c.apply_unpause();
+        assert!(!c.is_paused());
     }
 }

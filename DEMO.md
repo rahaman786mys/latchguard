@@ -12,7 +12,7 @@ Expected: `key_count=0`, policy tuple with a 60s window, spent window value,
 ## Offline (no chain, no API keys)
 
 ```bash
-cargo test                        # 29 tests
+cargo test                        # 34 tests
 cargo run --example agent_demo    # policy + signed intent demo
 cargo run --example agent_injection
 ```

@@ -1,59 +1,57 @@
 # Live evidence — LatchGuard
 
-Contract: `latchguard-ef3931.testnet`
+Contract: `latchguard-v2-47d093.testnet`
 Owner: `agent-guard-owner-e714a8.testnet`
-Contract keys: **0** (deployer key deleted)
-Policy: per-tx 0.50 NEAR, rolling 60s window cap 1.00 NEAR, interval 0, timelock 30s.
+Contract keys: **0** (deployer key deleted before the demo)
+Demo policy: per-tx 0.50 NEAR, rolling 60s window cap 1.00 NEAR, interval 0, timelock 30s.
 
 ## Scenario order (as executed)
 
-1. **Timelocked allowlist.** `set_allowlist(testnet, true)` → pending; `get_allowlist` empty.
-   After 30s, `apply_pending_allowlist()` → `["testnet"]`.
-   Tx: `2kDZwP3bdbRiBkE86JBfztmGLFdu2zRSDExaj2QaXZCg`, `Cf4tuBkUSgRUDVg4XgmeJVRwQydNW2u3Wcykv86NRZ8j`.
-2. **Under-cap attacker.** Signed 0.40 NEAR to `attacker.testnet` (not allowlisted)
-   → `AGENT_GUARD_BLOCK reason=recipient_not_allowlisted`.
-   Tx: `4dwtBu3dGfEPy44ktHPYEUj4M4xvpKFpByEhu6hRywjC`.
-3. **Legitimate payments.** 0.40 NEAR nonce=2 → settled
-   (`HLvBFXGsV8Nai2b8h2xFGofBcUBZTvXPbThDtxVcmPQD`); 0.40 nonce=3 → settled
-   (`Hfk9k2bm2QaVinL6u1EBvJWoF3hFgjiTcbsakZVRafvL`).
-4. **Rolling cap.** Third 0.40 inside 60s → `daily_cap_exceeded`
-   (`BNnz7zdsdXKanoNV66EVv1hN6EYSEvYrRZZSyQKossJo`).
-5. **Window frees.** After 61s, 0.40 nonce=5 → settled
-   (`KjcJfag7pgp7648A6fdTGZ4rS8qsaYJc2QgiNGYqkVt`). This is the capability a
-   native function-call key cannot provide.
-6. **Tamper.** Signature for 0.40, call asks 0.50, nonce=6 → `bad_signature`
-   (`APVTkguTXnSvhxZR17h6ZcwGyJcWptRk8sNL26UsFcGi`).
+1. **Timelocked allowlist.** Propose `testnet` → `get_allowlist` empty; after 30s
+   `apply_pending_allowlist()` → `["testnet"]`.
+   Tx: `H1kX7RfhkeSNC2CTcHQrx3u3Ct2MuDjFo4qoYCsEJjgs`,
+   `6VAoPgrTkAYwusct4emHk4zxmkRd54URh8ys77W4B7rr`.
+2. **Under-cap attacker.** Signed 0.40 NEAR to `attacker.testnet` →
+   `recipient_not_allowlisted`. Tx: `8bvJba7W9ukuJhsSCUpCeJ9pnpTMTxUaFYn33C117PP2`.
+3. **Legit payments.** 0.40 nonce=2 settled
+   (`FwMuBdYe8ZpPf2YWV24hjEvxuN9CitdimWfBjJGdPa2s`); 0.40 nonce=3 settled
+   (`CaQRHV4suzNkBT6qc8dS9KTLqgDSaPAiWuG3gbwU9qpP`).
+4. **Rolling cap.** Third 0.40 inside 60s → `window_cap_exceeded`
+   (`EGxVG2KVYasvnHdxPsXi9TeTX6Gg4dcfYj9uXoRtT7bD`).
+5. **Window frees.** After 61s, 0.40 nonce=5 settles
+   (`veqvyoLc3n2UAoNutzEws1svauK3fqUhwshuNs71nbj`). Native access keys cannot do this.
+6. **Tamper.** Signature for 0.40, call asks 0.50 → `bad_signature`
+   (`F13jMCAgVc2ra3rZdLE7WaN1wVN8WhgDv1XJtYD7YbHK`).
 7. **Replay.** nonce=2 again → `nonce_replay`
-   (`BJSNeSYxgbjp5VqD8wvZ9tKVDjeuawg6gC4JNrvTNVPp`).
+   (`CL7RXhHyfcausrdaB4ccK7cYc1V96o2dNnAubcfJgfio`).
 8. **Expiry.** `valid_until=now-10` → `expired_intent`
-   (`B8MDtj9uNmUPGipCoY4y3j6HEfitYg9LhvWV2cHdsP1c`).
-9. **Overspend.** 0.60 NEAR → `per_tx_cap_exceeded`
-   (`5HVneude7PHHQu1PML1qfgQwfNrTYN7Q2t1v5N641xK`).
-10. **Timelocked loosening.** `set_policy(1.00, 2.00, 0, 60)` → pending
-    (`DMZsDsVB5WSqbhNuVofte5ZjDkSt7QZcfc2Hty3Cdq8t`); 0.70 still blocked
-    (`8Y9jENMfsjw5vGaXyS3bQmWwjyzu32xcV856mod3zgqH`); after 30s
-    `apply_pending_policy()` (`A7dj5BXvxsb2A6y5JZKTKi1v18TXmNEkncA9TUKFbJgE`);
-    0.70 settles (`BBSSm75x7sWuXbs6keQpLmyWPYaFanSspFjjgtAGpXcE`).
+   (`94GBVCjLU5CpTkfL3pyYuFXqPn2b5mCAtKQ6Lx1BKzGC`).
+9. **Overspend.** 0.60 → `per_tx_cap_exceeded`
+   (`CAVPS4zGGj8aU9JPp4WJHrGHT57w3r4uhp8YVZmbbxnW`).
+10. **Timelocked loosening.** Propose 1.00/2.00
+    (`6G4b3DF3ZZB3YQRVQTGJfhpMasVJtYsnbybNJ5F3mQow`); 0.70 still blocked
+    (`Cd3DpcxRdFhFXjJWxiSY19vkWp5iVnR2qBq788S97b1p`); after 30s apply
+    (`vcpGd72PsZ7f8fz3jcvCZz6bAS5tvnMk5TcZsgP82uP`); 0.70 settles
+    (`2CfRQHRME4QCjhuXLjW4qpb4boQ5svNwYeVhRLkYW94S`).
 11. **Lockdown.** Deployer key deleted
-    (`2sjg9FwuQMFuZgifevAKQRArD8VyXihM9rMsrgqL6wm2`); RPC `view_access_key_list`
-    → `key_count = 0`. Owner pause/unpause still works
-    (`5ZbuuXcpneQ7b6hdF3qBi4mGPzNoMXYoP9imVu6ee9PY`,
-    `83A2X9jC8WNiKPbUsGku6qToD4rCUtK41pg9Y2iY1StC`).
+    (`3xgM1EmuDWeYtuwGMBLf1KuXWe19BVFBXC3693moyxXp`); RPC key list empty.
+12. **Pause / unpause.** Pause instant (`7NdoiZEA9jC5tANk1M8djbBCodkE9cgmDRQFTsDyNhn4`);
+    unpause requested, still paused (`2TfjsyVvP3ffZ9aMorTcAwBzUcmw8BtRLpSf85tEc64K`);
+    applied after 30s, unpaused (`5Vps6w7vF7DJzFAjDX5BqsVV32TPQKQy1iRN7VYg73mA`).
 
 ## Views after the run
 
 ```
-get_spent_in_window = "700000000000000000000000"   (0.70 NEAR in the trailing 60s)
-suggested_nonce      = 11
+get_policy        = [1.00 NEAR per-tx, 2.00 NEAR window cap, 0 interval, 60s window]
+get_spent_in_window = "700000000000000000000000"  (0.70 NEAR)
+suggested_nonce   = 11
+pending_policy    = null
+is_paused         = false
 ```
 
-## Reproduce read-only
+## Reproduce
 
-```bash
-bash scripts/verify-testnet.sh
-```
+- Read-only: `bash scripts/verify-testnet.sh`
+- Adversarial, with a freshly generated agent key: `bash scripts/attack-demo.sh <contract> <owner>`
 
-It checks the keyless account, the policy tuple, spent window, agent key length and
-pause state via JSON-RPC. No credentials required.
-
-Raw terminal output: `docs/testnet-intents-demo.txt`.
+Raw terminal output: `docs/attack-demo-output.txt`.
