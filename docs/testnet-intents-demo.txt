@@ -1,0 +1,85 @@
+LatchGuard — live testnet evidence (2026-11-11T20:47:27Z)
+contract: latchguard-ef3931.testnet
+owner:    agent-guard-owner-e714a8.testnet
+policy:   per-tx 0.50 NEAR, rolling window 60s cap 1.00 NEAR, interval 0, timelock 30s
+
+agent_pubkey=ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c
+
+== timelocked allowlist: propose testnet ==
+│    Transaction ID: 2kDZwP3bdbRiBkE86JBfztmGLFdu2zRSDExaj2QaXZCg
+[]
+
+waiting 31s for the timelock...
+│    Transaction ID: Cf4tuBkUSgRUDVg4XgmeJVRwQydNW2u3Wcykv86NRZ8j
+[
+  "testnet"
+
+== owner: register agent key + fund 2 NEAR ==
+│    Transaction ID: 81dEyCyvWD1rYURqMGN9f5tCJzxgZParztrUdKomNzvn
+│    Transaction ID: 9haHBBdT7LES7S4yHTk8bUkfsDz6qiaCF7nWpGCQ9ZLA
+
+== ATTACK 1: under-cap 0.40 NEAR to non-allowlisted attacker.testnet (nonce=1) ==
+│    Transaction ID: 4dwtBu3dGfEPy44ktHPYEUj4M4xvpKFpByEhu6hRywjC
+│      AGENT_GUARD_BLOCK recipient=attacker.testnet amount=400000000000000000000000 reason=recipient_not_allowlisted
+
+== legitimate signed 0.40 NEAR (nonce=2) ==
+│    Transaction ID: HLvBFXGsV8Nai2b8h2xFGofBcUBZTvXPbThDtxVcmPQD
+│      AGENT_GUARD_ALLOW recipient=testnet amount=400000000000000000000000 memo=signed intent nonce=2
+
+== second 0.40 NEAR inside the 60s window (nonce=3) ==
+│    Transaction ID: Hfk9k2bm2QaVinL6u1EBvJWoF3hFgjiTcbsakZVRafvL
+│      AGENT_GUARD_ALLOW recipient=testnet amount=400000000000000000000000 memo=signed intent nonce=3
+
+== third 0.40 NEAR (nonce=4) — rolling cap 1.00 NEAR should block ==
+│    Transaction ID: BNnz7zdsdXKanoNV66EVv1hN6EYSEvYrRZZSyQKossJo
+│      AGENT_GUARD_BLOCK recipient=testnet amount=400000000000000000000000 reason=daily_cap_exceeded
+
+waiting 61s for the rolling window to free budget...
+== 0.40 NEAR after the window (nonce=5) ==
+│    Transaction ID: KjcJfag7pgp7648A6fdTGZ4rS8qsaYJc2QgiNGYqkVt
+│      AGENT_GUARD_ALLOW recipient=testnet amount=400000000000000000000000 memo=signed intent nonce=5
+
+== ATTACK 2: tampered amount 0.40 -> 0.50 (nonce=6) ==
+│    Transaction ID: APVTkguTXnSvhxZR17h6ZcwGyJcWptRk8sNL26UsFcGi
+│      AGENT_GUARD_BLOCK recipient=testnet amount=500000000000000000000000 nonce=6 reason=bad_signature
+
+== ATTACK 3: replay nonce=2 ==
+│    Transaction ID: BJSNeSYxgbjp5VqD8wvZ9tKVDjeuawg6gC4JNrvTNVPp
+│      AGENT_GUARD_BLOCK recipient=testnet nonce=2 reason=nonce_replay
+
+== ATTACK 4: expired intent (nonce=7, valid_until=now-10) ==
+│    Transaction ID: B8MDtj9uNmUPGipCoY4y3j6HEfitYg9LhvWV2cHdsP1c
+│      AGENT_GUARD_BLOCK recipient=testnet nonce=7 reason=expired_intent
+
+== ATTACK 5: overspend 0.60 NEAR (nonce=8) ==
+│    Transaction ID: 5HVneude7PHHQu1PML1qfgQwfNrTYN7Q2t1v5N641xK
+│      AGENT_GUARD_BLOCK recipient=testnet amount=600000000000000000000000 reason=per_tx_cap_exceeded
+
+== owner loosening is timelocked: propose per-tx 1.00 / daily 2.00 ==
+│    Transaction ID: DMZsDsVB5WSqbhNuVofte5ZjDkSt7QZcfc2Hty3Cdq8t
+[
+  "1000000000000000000000000",
+  "2000000000000000000000000",
+  0,
+  60,
+  1794430309
+]
+
+== 0.70 NEAR still blocked by the old cap (nonce=9) ==
+│    Transaction ID: 8Y9jENMfsjw5vGaXyS3bQmWwjyzu32xcV856mod3zgqH
+│      AGENT_GUARD_BLOCK recipient=testnet amount=700000000000000000000000 reason=per_tx_cap_exceeded
+waiting 31s, then applying the pending policy...
+│    Transaction ID: A7dj5BXvxsb2A6y5JZKTKi1v18TXmNEkncA9TUKFbJgE
+[
+  "1000000000000000000000000",
+  "2000000000000000000000000",
+  0,
+  60
+]
+== 0.70 NEAR now allowed (nonce=10) ==
+│    Transaction ID: BBSSm75x7sWuXbs6keQpLmyWPYaFanSspFjjgtAGpXcE
+│      AGENT_GUARD_ALLOW recipient=testnet amount=700000000000000000000000 memo=signed intent nonce=10
+
+== views ==
+spent_in_window="700000000000000000000000"
+suggested_nonce=11
