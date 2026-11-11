@@ -107,6 +107,13 @@ impl LatchGuard {
         ));
     }
 
+    /// Any tightening action cancels every pending loosening across slots.
+    fn clear_pending(&mut self) {
+        self.pending_policy = None;
+        self.pending_allowlist.clear();
+        self.pending_unpause = None;
+    }
+
     fn is_tightening(&self, per_tx: u128, daily: u128, interval: u64, window: u64) -> bool {
         policy_is_tightening(
             &self.policy(),
@@ -137,7 +144,7 @@ impl LatchGuard {
         if self.delay_secs == 0
             || self.is_tightening(per_tx_cap.0, daily_cap.0, min_interval_secs, window_secs)
         {
-            self.pending_policy = None;
+            self.clear_pending();
             self.apply_policy_values(
                 per_tx_cap.0,
                 daily_cap.0,
@@ -185,6 +192,7 @@ impl LatchGuard {
     pub fn set_allowlist(&mut self, account: AccountId, allowed: bool) {
         self.assert_owner();
         if !allowed {
+            self.clear_pending();
             self.allowlist.retain(|a| a != &account);
             self.pending_allowlist.retain(|(a, _)| a != &account);
             env::log_str(&format!(
@@ -250,7 +258,7 @@ impl LatchGuard {
     pub fn pause(&mut self) {
         self.assert_owner();
         self.paused = true;
-        self.pending_unpause = None;
+        self.clear_pending();
         env::log_str("AGENT_GUARD_PAUSED");
     }
 
@@ -712,5 +720,40 @@ mod contract_tests {
         testing_env!(context(accounts(0), 1_700_000_131).build());
         c.apply_unpause();
         assert!(!c.is_paused());
+    }
+
+    #[test]
+    fn tightening_clears_all_pending_slots() {
+        let mut c = delayed_contract();
+        c.set_allowlist(accounts(1), true);
+        c.set_policy(U128(5 * NEAR), U128(10 * NEAR), 0, 3_600);
+        assert!(c.pending_policy().is_some());
+        assert_eq!(c.pending_allowlist().len(), 1);
+
+        c.set_policy(U128(NEAR / 2), U128(NEAR), 0, 3_600);
+        assert!(c.pending_policy().is_none());
+        assert!(c.pending_allowlist().is_empty());
+    }
+
+    #[test]
+    fn pause_clears_all_pending_slots() {
+        let mut c = delayed_contract();
+        c.set_allowlist(accounts(1), true);
+        c.set_policy(U128(5 * NEAR), U128(10 * NEAR), 0, 3_600);
+        c.pause();
+        assert!(c.pending_policy().is_none());
+        assert!(c.pending_allowlist().is_empty());
+        assert!(c.pending_unpause().is_none());
+    }
+
+    #[test]
+    fn reproposal_resets_timer() {
+        let mut c = delayed_contract();
+        c.set_policy(U128(5 * NEAR), U128(10 * NEAR), 0, 3_600);
+        let first = c.pending_policy().unwrap().4;
+        testing_env!(context(accounts(0), 1_700_000_110).build());
+        c.set_policy(U128(6 * NEAR), U128(12 * NEAR), 0, 3_600);
+        let second = c.pending_policy().unwrap().4;
+        assert!(second > first);
     }
 }

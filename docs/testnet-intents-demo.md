@@ -1,6 +1,6 @@
 # Live evidence — LatchGuard
 
-Contract: `latchguard-v3-29aa85.testnet`
+Contract: `latchguard-v4-ba2dcd.testnet`
 Owner: `agent-guard-owner-e714a8.testnet`
 Contract keys: **0** (deployer key deleted before the demo)
 Deployed code hash equals local wasm SHA-256 `fcd75509…` (byte-for-byte).
@@ -10,35 +10,35 @@ Demo policy: per-tx 0.50 NEAR, rolling 60s window cap 1.00 NEAR, interval 0, tim
 
 1. **Timelocked allowlist.** Propose `testnet` → `get_allowlist` empty; after 30s
    `apply_pending_allowlist()` → `["testnet"]`.
-   Tx: `97kQnXhxaSVF4ieHzCr7F7svvMrtZrn7YGKPY7kmxnU2`,
-   `G9FtJmS5VUtyqDkKm2PVqbrDrUBhyn37EpGbkSD9sB5E`.
+   Tx: `E6hiWaizg6aQfNd4oGVLU4v7UWaw456oh4KvrfUfxhps`,
+   `9vKqeyNqfK2j2PzqisZr4aV8kajo8zJhGJxJtM1q6hXk`.
 2. **Under-cap attacker.** Signed 0.40 NEAR to `attacker.testnet` →
-   `recipient_not_allowlisted`. Tx: `6Nn5HVfenriB3chNY5cVdAyBo8N741bqAVDwLKVVBJ9Q`.
+   `recipient_not_allowlisted`. Tx: `3GyU7JmBK1YjzYrUaEfyGUM3qZm3bEkDEUrueXkqkcqF`.
 3. **Legit payments.** 0.40 nonce=2 settled
-   (`6b7tbE3AgSx417CXELv5dLqdjGqTtcaZeNKfxYXWUtVH`); 0.40 nonce=3 settled
-   (`oQB92m4SCE7U67oLMXE1FoPUqJxBckbMP3eXsmqKSUJ`).
+   (`G2sMg8zL2NeGQwuBoXHTS88eY1AWgaWgayWYVLBrZcVW`); 0.40 nonce=3 settled
+   (`2uiqa4TEp4CUEz6A6GzSpfBq9etB8zrk9miWQY3pm7qp`).
 4. **Rolling cap.** Third 0.40 inside 60s → `window_cap_exceeded`
-   (`DKk2vibuzM2sKJoyUiTzxw9GQYaLgSeB2Ax34yWrYCin`).
+   (`FbtoU5tXpyUkyH3b23ZLnjshrmp3beBxpmxyHV4Ru12E`).
 5. **Window frees.** After 61s, 0.40 nonce=5 settles
-   (`HfpeQ8HXRFDtrH4wWd9cTXCW2nCzoxU6H6hQxxp613g5`). Native access keys cannot do this.
+   (`6iKfs7RVc2uT4xckdXBFLfVuRpsSo57oaH2mx1oTCUZ3`). Native access keys cannot do this.
 6. **Tamper.** Signature for 0.40, call asks 0.50 → `bad_signature`
-   (`8WbzJzd4D9devwPQDnXiDYcHb9pXoek52jEJEFghkaua`).
+   (`7r4uPCUsq85SJSc9n6HgkUZoAuji3TuY4BDXAcAf8MFR`).
 7. **Replay.** nonce=2 again → `nonce_replay`
-   (`9wB7HTLk5ejKxMU1wxatgPt3CuqEVgsRDBbSYwSKjVZ5`).
+   (`75HEzyWwGG9VEi4fnjpcA2UyayV6Tpz28hkHuLV1uJqQ`).
 8. **Expiry.** `valid_until=now-10` → `expired_intent`
-   (`9Q4861fGRU7j9YEJeH9EwJZUKMUiRRiGsc2b24tDnxmU`).
+   (`2A2Sra3hQmruiVVYRAFYqbMA7nLLCkDHmDYFhSkuz1c5`).
 9. **Overspend.** 0.60 → `per_tx_cap_exceeded`
-   (`EbMU7DFAEpj6RDwwzZKeZoLDoKtvECKUpgJarR1psrKE`).
+   (`2zYPuZZqGZcDKmE3G2cSe93B9CsStVYJvjsqNgavMKoE`).
 10. **Timelocked loosening.** Propose 1.00/2.00
-    (`AdA5qaU7pAAqVW5S1eEwLMmS2MyqwRMvqHMzkzyYJNj5`); 0.70 still blocked
-    (`BT2PUdC7wqx7YV3iEHntUwpLGb7M8axY61TeEeec2Yeg`); after 30s apply
-    (`6rGRS3GPkEaEsggS6PqEBpCT5YjUyRRrd3yESeNcRr73`); 0.70 settles
-    (`7uzcEqZYDcHx6pcUrtwxa8hFb88aNB3oRN43pPquVE3J`).
+    (`2gPNQ8pvYteebKiQcnpwQDVLf9ZixnjoGMxABdE5ZKjS`); 0.70 still blocked
+    (`GBXh6RyTyUHszUv7d1xbuBs7d3dXxQnX42iLy9k2RVoV`); after 30s apply
+    (`7MAcayXb8xrPTP5eCAyReLobgZG4Kxi49epQDB2VfZ3K`); 0.70 settles
+    (`YNKc88se8XepFKQ8ZRDgy73xT3qEbjfsJT1RrN16oMx`).
 11. **Lockdown.** Deployer key deleted
-    (`9MDg2Lbx7tHA6hQfGRv4fpHLxDhRWfRPVyuNGzbynr3S`); RPC key list empty.
-12. **Pause / unpause.** Pause instant (`6a3DXmwV9jUS7EthfZdhATqsAUgnWYRUuTEdztrtEdLY`);
-    unpause requested, still paused (`2vu4zaR4i1xxrK8ZwNJG1ZM1pWttDuv6W31HbCPhi6rf`);
-    applied after 30s, unpaused (`5S3Ck27RH8KSTdcehh57BFfqY6ry8bnQkU9Az8M7gytJ`).
+    (`7TFYWt3QPaU2V1CM56HLx9LpjetRHPzZx69LDAjHZWxX`); RPC key list empty.
+12. **Pause / unpause.** Pause instant (`3oaGA2ZB6yvJkS9erhcrWHjeugHE1vVB23dt991gwZ6H`);
+    unpause requested, still paused (`33nqSdr9kyyfef7FcRbRZkXxNsiB1zVvY3J4kQi4YdH2`);
+    applied after 30s, unpaused (`Dcto4CLUhUADbC3vR3N4EWj9cbVwbPc1crkyC2HREDrF`).
 
 ## Views after the run
 
