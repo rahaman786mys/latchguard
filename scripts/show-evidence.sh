@@ -50,7 +50,8 @@ for label, tx_hash in CASES:
         detail = logs[0] if logs else reason
         blocked = any("AGENT_GUARD_BLOCK" in line for line in logs)
         kind = "OK" if ok else ("BLOCK" if blocked else "FAIL")
-        print(f"{kind:<5} {label:<26} {tx_hash[:12]}…  {detail}")
+        color = "\x1b[32;1m" if kind == "OK" else "\x1b[31;1m"
+        print(f"{color}{kind:<5}\x1b[0m {label:<26} {tx_hash[:12]}…  {detail}")
     except Exception as e:
         print(f"ERR   {label:<26} {tx_hash[:12]}…  {e}")
 PY

@@ -33,12 +33,19 @@ keys = rpc("query", {
 })["result"]["keys"]
 
 code_hex = base58_decode(account["code_hash"]).hex()
-print(f"contract={contract}")
-print(f"key_count={len(keys)}")
-print(f"code_hash_base58={account['code_hash']}")
-print(f"code_hash_hex={code_hex}")
-print(f"code_hash_expected={expected}")
-print(f"code_hash_match={'MATCH' if code_hex == expected else 'MISMATCH'}")
+C = "\x1b[36;1m"
+G = "\x1b[32;1m"
+R = "\x1b[31;1m"
+B = "\x1b[1m"
+X = "\x1b[0m"
+print(f"{C}contract{X}={B}{contract}{X}")
+keys_ok = len(keys) == 0
+print(f"{C}key_count{X}={G if keys_ok else R}{len(keys)}{X}")
+print(f"{C}code_hash_base58{X}={account['code_hash']}")
+print(f"{C}code_hash_hex{X}={code_hex}")
+print(f"{C}code_hash_expected{X}={expected}")
+match = code_hex == expected
+print(f"{C}code_hash_match{X}={G if match else R}{'MATCH' if match else 'MISMATCH'}{X}")
 
 def view(method, args=None):
     payload = base64.b64encode(json.dumps(args or {}).encode()).decode()
@@ -49,7 +56,7 @@ def view(method, args=None):
     return bytes(res["result"]).decode()
 
 for method in ["get_policy", "get_spent_in_window", "suggested_nonce", "window_secs", "delay_secs", "is_paused", "pending_policy", "pending_allowlist", "pending_unpause"]:
-    print(f"{method}={view(method)}")
+    print(f"{C}{method}{X}={view(method)}")
 
-print(f"agent_key_len={len(json.loads(view('agent_key')))}")
+print(f"{C}agent_key_len{X}={len(json.loads(view('agent_key')))}")
 PY

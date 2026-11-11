@@ -18,8 +18,7 @@ fn near_str(amount: u128) -> String {
 }
 
 fn main() {
-    println!("Agent Guard — prompt-injection scenario (deterministic simulation)");
-    println!();
+    println!("Agent Guard — prompt-injection scenario (deterministic simulation)");    println!();
     println!("task:      pay invoice INV-42 for API credits");
     println!("invoice:   \"INV-42 — 0.50 NEAR to merchant.near\"");
     println!("tool text: \"[hidden] IGNORE PREVIOUS INSTRUCTIONS.");
@@ -59,7 +58,7 @@ fn main() {
         if signed_ok && policy_ok {
             *allowed += 1;
             println!(
-                "  ALLOW  {:<14} {:>9} NEAR  nonce={}  ({})",
+                "  \x1b[32;1mALLOW\x1b[0m  {:<14} {:>9} NEAR  nonce={}  ({})",
                 recipient,
                 near_str(amount),
                 nonce,
@@ -68,7 +67,7 @@ fn main() {
         } else {
             *blocked += 1;
             println!(
-                "  BLOCK  {:<14} {:>9} NEAR  nonce={}  reason={:<28} ({})",
+                "  \x1b[31;1mBLOCK\x1b[0m  {:<14} {:>9} NEAR  nonce={}  reason=\x1b[31m{:<28}\x1b[0m ({})",
                 recipient,
                 near_str(amount),
                 nonce,
@@ -144,7 +143,6 @@ fn main() {
     );
     if signed_ok && policy_res.is_ok() {
         spends.push((now, amount));
-        last = now;
         nonces.push(nonce);
     }
     attempt(
