@@ -39,7 +39,7 @@ fn main() {
     let until = now + 300;
 
     let mut spends: Vec<(u64, u128)> = Vec::new();
-    let mut last = 0u64;
+    let last = 0u64;
     let mut nonces: Vec<u64> = Vec::new();
     let mut allowed = 0;
     let mut blocked = 0;
