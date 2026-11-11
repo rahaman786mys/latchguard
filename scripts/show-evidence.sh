@@ -4,9 +4,13 @@
 set -euo pipefail
 
 python3 - <<'PY'
-import json, urllib.request
+import json, time, urllib.request
 
-RPC = "https://rpc.testnet.near.org"
+ENDPOINTS = [
+    "https://rpc.testnet.fastnear.com",
+    "https://rpc.testnet.near.org",
+    "https://testnet.rpc.aftermath.finance",
+]
 SENDER = "agent-guard-owner-e714a8.testnet"
 CASES = [
     ("under-cap attacker blocked", "3GyU7JmBK1YjzYrUaEfyGUM3qZm3bEkDEUrueXkqkcqF"),
@@ -26,16 +30,26 @@ CASES = [
     ("unpause applied", "Dcto4CLUhUADbC3vR3N4EWj9cbVwbPc1crkyC2HREDrF"),
 ]
 
-def status(tx_hash):
-    body = {"jsonrpc": "2.0", "id": "e", "method": "tx",
-            "params": {"tx_hash": tx_hash, "sender_account_id": SENDER, "wait_until": "FINAL"}}
-    req = urllib.request.Request(RPC, data=json.dumps(body).encode(),
-                                 headers={"Content-Type": "application/json"})
-    return json.load(urllib.request.urlopen(req, timeout=30))
+def rpc(method, params):
+    body = {"jsonrpc": "2.0", "id": "e", "method": method, "params": params}
+    data = json.dumps(body).encode()
+    last = None
+    for attempt in range(6):
+        for url in ENDPOINTS:
+            try:
+                req = urllib.request.Request(
+                    url, data=data, headers={"Content-Type": "application/json"}
+                )
+                with urllib.request.urlopen(req, timeout=20) as resp:
+                    return json.load(resp)
+            except Exception as e:
+                last = e
+        time.sleep(1.5 * (attempt + 1))
+    raise RuntimeError(f"RPC failed after retries: {last}")
 
 for label, tx_hash in CASES:
     try:
-        d = status(tx_hash)
+        d = rpc("tx", {"tx_hash": tx_hash, "sender_account_id": SENDER, "wait_until": "FINAL"})
         res = d.get("result", {})
         outcome = res.get("status", {})
         ok = "SuccessValue" in outcome
@@ -54,4 +68,5 @@ for label, tx_hash in CASES:
         print(f"{color}{kind:<5}\x1b[0m {label:<26} {tx_hash[:12]}…  {detail}")
     except Exception as e:
         print(f"ERR   {label:<26} {tx_hash[:12]}…  {e}")
+    time.sleep(0.15)
 PY

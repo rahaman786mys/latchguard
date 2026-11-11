@@ -5,10 +5,14 @@ contract="${1:-latchguard-v4-ba2dcd.testnet}"
 expected_code_hash="add2079b5a4449cd10d6b5cd08e0627daee7bae1f9a7102c61d6cd80f3737b1e"
 
 python3 - "$contract" "$expected_code_hash" <<'PY'
-import base64, json, sys, urllib.request
+import base64, json, sys, time, urllib.request
 
 contract, expected = sys.argv[1], sys.argv[2]
-RPC = "https://rpc.testnet.near.org"
+ENDPOINTS = [
+    "https://rpc.testnet.fastnear.com",
+    "https://rpc.testnet.near.org",
+    "https://testnet.rpc.aftermath.finance",
+]
 ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
 
 def base58_decode(s: str) -> bytes:
@@ -20,10 +24,20 @@ def base58_decode(s: str) -> bytes:
 
 def rpc(method, params):
     body = {"jsonrpc": "2.0", "id": "verify", "method": method, "params": params}
-    req = urllib.request.Request(
-        RPC, data=json.dumps(body).encode(), headers={"Content-Type": "application/json"}
-    )
-    return json.load(urllib.request.urlopen(req, timeout=30))
+    data = json.dumps(body).encode()
+    last = None
+    for attempt in range(6):
+        for url in ENDPOINTS:
+            try:
+                req = urllib.request.Request(
+                    url, data=data, headers={"Content-Type": "application/json"}
+                )
+                with urllib.request.urlopen(req, timeout=20) as resp:
+                    return json.load(resp)
+            except Exception as e:  # 429, timeouts, network
+                last = e
+        time.sleep(1.5 * (attempt + 1))
+    raise RuntimeError(f"RPC failed after retries: {last}")
 
 account = rpc("query", {
     "request_type": "view_account", "finality": "final", "account_id": contract
@@ -57,6 +71,7 @@ def view(method, args=None):
 
 for method in ["get_policy", "get_spent_in_window", "suggested_nonce", "window_secs", "delay_secs", "is_paused", "pending_policy", "pending_allowlist", "pending_unpause"]:
     print(f"{C}{method}{X}={view(method)}")
+    time.sleep(0.15)
 
 print(f"{C}agent_key_len{X}={len(json.loads(view('agent_key')))}")
 PY
